@@ -36,12 +36,17 @@ def main():
     # Add arguments
     parser.add_argument('--output_dir', type=str, help='output directory where metic will store results.')
     parser.add_argument('--name', type=str, help='name of the dataset')
-    parser.add_argument('--input_files', type=str, help='input files required by the metic.')
+    parser.add_argument('--methods.mapping', type=str, help='input file #1.')
+    parser.add_argument('--data.meta', type=str, help='input file #2.')
+    parser.add_argument('--data.data_specific_params', type=str, help='input file #3.')
 
     # Parse arguments
     args = parser.parse_args()
 
-    input_files = args.input_files.split(',')
+    methods_mapping_input = getattr(args, 'methods.mapping')
+    data_meta_input = getattr(args, 'data.meta')
+    data_params_input = getattr(args, 'data.data_specific_params')
+    input_files = [methods_mapping_input, data_meta_input, data_params_input]
 
     run_metric(args.output_dir, args.name, input_files)
 
