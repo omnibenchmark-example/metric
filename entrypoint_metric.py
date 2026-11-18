@@ -1,54 +1,41 @@
 import argparse
 import os
 
+
 def concatenate_input_content(input_files):
-    concatenated_content = ""  # Initialize an empty string to hold the concatenated content
-    
-    # Iterate over each input file
+    content = ""
     for input_file in input_files:
-        # Open each input file in read mode and read its content
         with open(input_file, 'r') as file:
-            # Read the content of the input file and append it to the concatenated_content string
-            concatenated_content += file.read()
-            # Optionally, you can add a newline between the content of each file
-            concatenated_content += '\n'
-
-    return concatenated_content
-
-
-def run_metric(output_dir, name, input_files):
-    # Create the output directory if it doesn't exist
-    os.makedirs(output_dir, exist_ok=True)
-
-    content = concatenate_input_content(input_files)
-
-    metric_results_file = os.path.join(output_dir, f'{name}.results.txt')
-    content += f"4. Running metric using parameters into {metric_results_file}"
-
-    with open(metric_results_file, 'w') as file:
-        file.write(content)
+            content += file.read() + '\n'
+    return content
 
 
 def main():
-    # Create argument parser
-    parser = argparse.ArgumentParser(description='Run metic on files.')
-
-    # Add arguments
-    parser.add_argument('--output_dir', type=str, help='output directory where metic will store results.')
-    parser.add_argument('--name', type=str, help='name of the dataset')
+    parser = argparse.ArgumentParser(description='Run metric on files.')
+    parser.add_argument('--output_dir', type=str, help='output directory where metric will store results.')
+    parser.add_argument('--name', type=str, help='name of the module')
+    # api >= 0.8.0: the exact path to write, as `--output <id>=PATH`. The stage
+    # declares one output, whatever the benchmark calls it.
+    parser.add_argument('--output', action='append', default=[], help='id=PATH of the output to write')
     parser.add_argument('--methods.mapping', type=str, help='input file #1.')
     parser.add_argument('--data.meta', type=str, help='input file #2.')
-    parser.add_argument('--data.data_specific_params', type=str, help='input file #3.')
+    parser.add_argument('--data.data_specific_params', type=str, help='input file #3.', required=False)
+    args, _ = parser.parse_known_args()
 
-    # Parse arguments
-    args = parser.parse_args()
+    inputs = [getattr(args, 'methods.mapping'), getattr(args, 'data.meta'), getattr(args, 'data.data_specific_params')]
+    input_files = [f for f in inputs if f]
 
-    methods_mapping_input = getattr(args, 'methods.mapping')
-    data_meta_input = getattr(args, 'data.meta')
-    data_params_input = getattr(args, 'data.data_specific_params')
-    input_files = [methods_mapping_input, data_meta_input, data_params_input]
+    if args.output:
+        results_file = args.output[0].split("=", 1)[1]
+    else:
+        results_file = os.path.join(args.output_dir, f'{args.name}.results.txt')
 
-    run_metric(args.output_dir, args.name, input_files)
+    content = concatenate_input_content(input_files)
+    content += f"4. Running metric using parameters into {results_file}"
+
+    os.makedirs(os.path.dirname(results_file) or ".", exist_ok=True)
+    with open(results_file, 'w') as file:
+        file.write(content)
 
 
 if __name__ == "__main__":
